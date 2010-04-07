@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Демо приложение</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script>
+    <script type="text/javascript" src="http://connect.rapira.mail.ru/js/loader.js"></script>
+    <script type="text/javascript" src="config.js"></script>
+    <style type="text/css">
+        .log { display: block; width: 99%; height: 400px; font-size: 85%; margin-top: 20px; }
+        fieldset { margin: 10px 0; }
+        hr { margin: 10px 0; }
+        p.note { font-size: 80%; margin: 0; padding: 0; color: #666; }
+        input[type=text] { width: 150px; }
+        input[type=text].long { width: 300px; }
+    </style>
+  </head>
+  <body>
+    <h1>Демонстрационное приложение</h1>
+    <script type="text/javascript">
+        //<![CDATA[
+        $(document).ready(function() {
+            var dump = function(arr,level) {
+                var dumped_text = "";
+                if(!level) level = 0;
+
+                //The padding given at the beginning of the line.
+                var level_padding = "";
+                for(var j=0;j<level+1;j++) level_padding += "    ";
+
+                if(typeof(arr) == 'object') { //Array/Hashes/Objects
+                    for(var item in arr) {
+                        var value = arr[item];
+
+                        if(typeof(value) == 'object') { //If it is an array,
+                            dumped_text += level_padding + "'" + item + "' ...\n";
+                            dumped_text += dump(value,level+1);
+                        } else {
+                            dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
+                        }
+                    }
+                } else { //Stings/Chars/Numbers etc.
+                    dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
+                }
+                return dumped_text;
+            }
+
+            var container = $('<div>').appendTo('body');
+            var logArea = $('<textarea>').addClass('log').css({}).appendTo('body');
+            var logger = function(msg) {
+                $.each(arguments, function(index, msg) {
+                    logArea.text(logArea.text() + dump(msg) + "\n");
+                });
+                logArea.attr('scrollTop', logArea.attr('scrollHeight')); // scroll textarea
+            }
+
+            mailru.loader.require('api', function() {
+                mailru.app.init(window.demo_app_config.private_key);
+
+                logger('current session', mailru.session);
+
+                mailru.events.listen('app.friendsInvitation', function() {
+                    logger('app.friendsInvitation', arguments);
+                });
+                mailru.events.listen('app.paymentDialogStatus', function() {
+                    logger('app.paymentDialogStatus', arguments);
+                });
+
+                // dialogs
+                var div = $('<fieldset>').append($('<legend>').text('диалоги')).appendTo(container);
+                $('<p>').addClass('note').text('После закрытия диалога должно быть сгенерено событие').appendTo(div);
+                $('<button>').attr({'type': 'button'}).text('payment dialog').click(function() {
+                    mailru.app.payments.showDialog({service_id: 1, service_name: 'название', sms_price: 1, other_price: 2000});
+                }).appendTo(div);
+                $('<button>').attr({'type': 'button'}).text('invite friends').click(function() {
+                    mailru.app.friends.invite();
+                }).appendTo(div);
+
+                // users.getInfo
+                var div = $('<fieldset>').append($('<legend>').text('mailru.common.users')).appendTo(container);
+                $('<input>').attr({'id': 'usersGetInfoInput', 'value': mailru.session.vid, 'type': 'text'}).addClass('long').appendTo(div);
+                $('<button>').attr({'type': 'button'}).text('users.getInfo').click(function() {
+                    var args = $('#usersGetInfoInput').val().split(',');
+                    args.unshift(function(info) { logger('mailru.common.users.getInfo', info); });
+                    mailru.common.users.getInfo.apply(this, args);
+                }).appendTo(div);
+                $('<p>').addClass('note').text('можно указать несколько ид через запятую').appendTo(div);
+
+                $('<hr>').appendTo(div);
+
+                // users.isAppUser
+                $('<input>').attr({'id': 'usersIsAppUserInput', 'value': mailru.session.vid, 'type': 'text'}).addClass('long').appendTo(div);
+                $('<button>').attr({'type': 'button'}).text('users.isAppUser').click(function() {
+                    mailru.app.users.isAppUser(function(info) { logger('mailru.app.users.isAppUser', info); }, $('#usersIsAppUserInput').val());
+                }).appendTo(div);
+
+                $('<hr>').appendTo(div);
+
+                // users.hasAppPermission
+                $('<input>').attr({'id': 'usersHasAppPermissionPerm', 'value': 'stream', 'type': 'text'}).appendTo(div);
+                $('<input>').attr({'id': 'usersHasAppPermissionUid', 'value': mailru.session.vid, 'type': 'text'}).appendTo(div);
+                $('<button>').attr({'type': 'button'}).text('users.hasAppPermission').click(function() {
+                    mailru.common.users.hasAppPermission(function(info) { logger('mailru.common.users.hasAppPermission', info); }, $('#usersHasAppPermissionPerm').val(), $('#usersHasAppPermissionUid').val());
+                }).appendTo(div);
+
+            });
+        });
+        //]]>
+        </script>
+
+  </body>
+</html>
