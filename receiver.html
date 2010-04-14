@@ -4,14 +4,21 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>Mail.Ru Connect receiver</title>
-        <script src="http://connect.rapira.mail.ru/js/loader.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script>
+        <script type="text/javascript" src="config.js"></script>
     </head>
     <body>
+        <!--
+            This is non standerd receiver with ability to configure scipt url.
+            For production sites please use receiver.html from documentation.
+        -->
 		<script>
         //<![CDATA[
-			mailru.loader.require('receiver', function(){
-				mailru.receiver.init();
-			})
+            $.getScript(window.demo_app_config.library_url, function() {
+                mailru.loader.require('receiver', function(){
+                    mailru.receiver.init();
+                });
+            });
         //]]>
 		</script>
     </body>

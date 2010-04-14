@@ -5,7 +5,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Демо приложение</title>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script>
-    <script type="text/javascript" src="http://connect.rapira.mail.ru/js/loader.js"></script>
     <script type="text/javascript" src="config.js"></script>
     <style type="text/css">
         .log { display: block; width: 99%; height: 400px; font-size: 85%; margin-top: 20px; }
@@ -20,7 +19,7 @@
     <h1>Демонстрационное приложение</h1>
     <script type="text/javascript">
         //<![CDATA[
-        $(document).ready(function() {
+        $.getScript(window.demo_app_config.library_url, function() {
             var dump = function(arr,level) {
                 var dumped_text = "";
                 if(!level) level = 0;
@@ -60,11 +59,11 @@
 
                 logger('current session', mailru.session);
 
-                mailru.events.listen('app.friendsInvitation', function() {
-                    logger('app.friendsInvitation', arguments);
+                mailru.events.listen('app.friendsInvitation', function(result) {
+                    logger('app.friendsInvitation', result);
                 });
-                mailru.events.listen('app.paymentDialogStatus', function() {
-                    logger('app.paymentDialogStatus', arguments);
+                mailru.events.listen('app.paymentDialogStatus', function(result) {
+                    logger('app.paymentDialogStatus', result);
                 });
 
                 // dialogs
@@ -76,6 +75,16 @@
                 $('<button>').attr({'type': 'button'}).text('invite friends').click(function() {
                     mailru.app.friends.invite();
                 }).appendTo(div);
+
+                // permissions
+                var div = $('<fieldset>').append($('<legend>').text('привилегии')).appendTo(container);
+                $('<p>').addClass('note').text('После закрытия диалога должно быть сгенерено событие').appendTo(div);
+                $('<button>').attr({'type': 'button'}).text('widget').click(function() {
+                    mailru.common.users.requirePermissions('widget');
+                }).appendTo(div);
+                mailru.events.listen(mailru.common.events.requireWidgetPermissions, function(){
+                    logger('mailru.common.events.requireWidgetPermissions', arguments);
+                });
 
                 // users.getInfo
                 var div = $('<fieldset>').append($('<legend>').text('mailru.common.users')).appendTo(container);
@@ -108,6 +117,5 @@
         });
         //]]>
         </script>
-
   </body>
 </html>
